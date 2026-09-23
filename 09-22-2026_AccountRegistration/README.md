@@ -1,64 +1,31 @@
 # Account Registration
 
-**Exercise:** 1  
-**Difficulty:** 1/5  
+**Category:** Go backend boundaries and design  
+**Difficulty:** 1 / 10 (baseline; later exercises will become less explicit)  
 **Estimated time:** 30–45 minutes
 
-## Scenario
+## AI
 
-The product has a small HTTP endpoint for creating accounts. It accepts an email and plan, rejects invalid or duplicate registrations, stores the user, and sends a welcome email.
+There is no rule against using AI, but the purpose of these sessions is to build your own backend instincts. Read the code, describe what feels difficult to change, form a hypothesis, and make the smallest refactor that improves the design. Run the tests after each meaningful step.
 
-The endpoint shipped quickly and works. Its tests pass. However, nearly every decision involved in registering an account now lives inside `ServeHTTP`, beside JSON parsing and HTTP responses.
-
-## The Breaking Point
-
-Two new callers need to register accounts next sprint:
-
-- an internal batch import command
-- a queue consumer that handles partner sign-ups
-
-Both callers must apply the same normalization, validation, duplicate detection, persistence, and welcome-email behavior. They should not construct fake HTTP requests, and the rules must not be copied into three places.
-
-## Your Challenge
-
-Refactor the code so the existing endpoint continues to behave exactly as it does while the account-registration operation can be reused by a non-HTTP caller.
-
-Keep the solution proportionate to this small service. You should be able to explain what owns each decision and why each dependency is located where it is.
-
-Do not add the batch command or queue consumer. The goal is to leave a clean place for those callers to use later.
-
-## Current Behavior
-
-- Only `POST` is allowed.
-- Unknown JSON fields and malformed JSON are rejected.
-- Emails are trimmed and normalized to lowercase.
-- An email must be non-empty and contain `@`.
-- Plans are limited to `free`, `pro`, and `team`.
-- Duplicate normalized emails are rejected.
-- The user is stored before the welcome email is sent.
-- Storage and email failures return an internal-server error.
-
-## Acceptance Criteria
-
-- All existing tests continue to pass.
-- The core registration operation is callable without `http.Request` or `http.ResponseWriter`.
-- Registration rules have one source of truth.
-- HTTP concerns stay at the HTTP boundary.
-- Failure information is strong enough for the HTTP boundary to preserve the existing status codes.
-- The account-registration code is not tied to the in-memory implementations.
-- The refactor does not introduce abstractions without a concrete use in this exercise.
-
-## Suggested Workflow
-
-1. Run the tests and read the production code.
-2. Mark which lines understand HTTP and which lines understand account registration.
-3. Decide what a non-HTTP caller would need to provide and receive.
-4. Move one responsibility at a time while keeping tests green.
-5. Revisit the names and dependencies after the behavior is stable.
+Bring in AI afterward for review or comparison. If you ask for the finished structure before wrestling with the problem, you skip the part that teaches you how to recognize it later in production code.
 
 ## Setup
 
-From this directory:
+This exercise is a standalone Go module. Navigate into this directory before running commands.
+
+No third-party dependencies or external services are required.
+
+## Restrictions
+
+- Any test changes must preserve the behavior the original test protects.
+- Keep the existing HTTP endpoint behavior intact.
+- Do not add third-party packages, a web framework, or a dependency-injection container.
+- Do not use package-level mutable state to make dependencies globally accessible.
+- You may change constructors, add files, introduce types, or reorganize the package.
+- Keep the required refactor small enough that another engineer could understand it in one review.
+
+## Running Tests
 
 ```bash
 go test ./...
@@ -66,48 +33,67 @@ go test -race ./...
 go vet ./...
 ```
 
-## Restrictions
+All tests pass against the starter code. They should continue passing after your refactor. The helper block near the top of `registration_test.go` is the intended adjustment point if your public construction API changes.
 
-- Use the standard library only.
-- Do not use a package-level mutable variable as a dependency.
-- Do not add a framework or dependency-injection container.
-- Preserve externally observable behavior unless you clearly document and test an intentional improvement.
+## The Challenge
 
-## Hints
+`RegistrationHandler` powers the public account-registration endpoint. It parses a request, normalizes and validates the submitted data, checks for an existing account, stores a new user, sends a welcome email, and chooses the HTTP response.
 
-<details>
-<summary>Hint 1</summary>
+The endpoint has been stable for months. Most changes have been small enough that adding another condition inside `ServeHTTP` felt reasonable, and the in-memory dependencies made the original feature quick to test.
 
-Imagine the next caller has a plain `context.Context`, an email, and a plan. Which parts of the current method would still make sense?
+Read `registration.go` before changing anything. Notice which lines understand HTTP, which lines understand what a valid account is, which concrete types the handler knows about, and how a failure becomes a response. Also pay attention to the order in which externally visible actions occur.
 
-</details>
+### The Breaking Point
 
-<details>
-<summary>Hint 2</summary>
+The partnerships team is adding two new sources of registrations:
 
-Look at the concrete types accepted by `NewRegistrationHandler`. Ask which capabilities the registration operation actually needs.
+- a nightly import command for accounts received in a CSV file
+- a queue consumer for partner sign-up events
 
-</details>
+Both sources must behave like the public endpoint. Emails must be normalized the same way, the same plans must be accepted, duplicates must be handled consistently, and successful registrations must still send the same welcome message.
 
-<details>
-<summary>Hint 3</summary>
+The first proposal was to call the HTTP handler with a fake request. The second was to copy the registration block into each caller. Neither approach survives the next rule change safely. A new plan or validation rule could behave differently depending on how the account entered the system.
 
-The HTTP layer needs to distinguish invalid input, duplicates, and internal failures. String comparison is not the only way to make errors distinguishable.
+Refactor the starter so a future non-HTTP caller has a natural way to perform a registration without duplicating these decisions or pretending to be an HTTP client. You do not need to implement either new caller.
 
-</details>
+## Goals
+
+- Leave one authoritative path for the decisions involved in registering an account.
+- Preserve every current HTTP status and successful response covered by the tests.
+- Make it possible for a future caller to register an account without constructing HTTP objects.
+- Make replacing the in-memory storage or email implementation a local change.
+- Keep failure information meaningful enough that each caller can translate it for its own environment.
+- Improve the design without building a framework for hypothetical requirements.
 
 ## Bonus Challenge
 
-The user is already stored when the email provider fails. A client retry then receives a duplicate error even though the first request reported failure. Explain two production policies that could handle this situation. Implement one only if the required refactor is already clean and tested.
+Look at what happens when saving the user succeeds and sending the welcome email fails:
 
-## Questions to Answer Afterwards
+1. The endpoint reports an internal-server error.
+2. The user now exists.
+3. Retrying the same request returns a duplicate conflict.
 
-1. Which layer owns email normalization and plan validation in your refactor?
-2. Where are dependency failures translated into HTTP status codes?
-3. Which interfaces did you introduce, and which type consumes each one?
-4. What would the queue consumer need to call your registration operation?
-5. What behavior would you choose for a welcome-email failure in a real system?
+Write down two policies a production system could choose for this situation. Examples may involve changing what counts as success, retrying one side effect separately, or changing how work is recorded. Implement one only after the required refactor is complete and tested.
 
-## Submit Your Attempt
+## If You Get Stuck
 
-Push your refactor or send the diff back for review. The review will cover your approach, correctness issues, an idiomatic Go alternative where useful, the backend concept behind the exercise, and one takeaway.
+- Draw a line around the code that only makes sense because the caller is HTTP. What remains on the other side?
+- Imagine the queue consumer has only an email and a plan. What single operation would you want it to call?
+- Look at the concrete types accepted by the current constructor. What behavior does the registration workflow actually use from each one?
+- The endpoint must distinguish invalid input, duplicate data, and infrastructure failure. Consider how code can communicate categories of failure without depending on complete error-message strings.
+- If your refactor creates many interfaces or layers, ask what concrete change each abstraction makes easier today.
+
+## Questions to Answer Afterward
+
+1. Where do normalization and plan validation live in your version, and why?
+2. How does the HTTP code decide which status to return?
+3. Which dependencies can now be replaced in a test or production program?
+4. What would the queue consumer call?
+5. Which part of your design would change if welcome emails became asynchronous?
+6. Did you introduce anything that the current requirements do not justify?
+
+## Submitting
+
+When you are done, push your refactor or paste the diff back into ChatGPT. The review will follow this structure:
+
+`your approach → bugs or issues → idiomatic Go alternative → backend concept → one thing to remember`
