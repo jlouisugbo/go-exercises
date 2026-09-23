@@ -15,9 +15,9 @@ var (
 )
 
 type GiftCard struct {
-	Code        string
-	ValueCents  int
-	Redeemed    bool
+	Code       string
+	ValueCents int
+	Redeemed   bool
 	RedeemedBy string
 }
 
