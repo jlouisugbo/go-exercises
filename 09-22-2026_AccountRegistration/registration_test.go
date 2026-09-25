@@ -49,6 +49,29 @@ func (a *testApp) register(method, body string) registrationResult {
 	}
 }
 
+func TestServiceRegisterWithoutHTTP(t *testing.T) {
+	users := NewMemoryUserStore()
+	emails := &MemoryEmailSender{}
+	service := NewService(users, emails)
+
+	user, err := service.Register("  JOEL@Example.com ", ProPlan)
+	if err != nil {
+		t.Fatalf("register: %v", err)
+	}
+	if user.Email != "joel@example.com" {
+		t.Fatalf("email = %q, want %q", user.Email, "joel@example.com")
+	}
+	if user.Plan != ProPlan {
+		t.Fatalf("plan = %q, want %q", user.Plan, ProPlan)
+	}
+	if users.Count() != 1 {
+		t.Fatalf("user count = %d, want 1", users.Count())
+	}
+	if emails.Count() != 1 {
+		t.Fatalf("email count = %d, want 1", emails.Count())
+	}
+}
+
 func TestRegistrationHandler(t *testing.T) {
 	t.Run("request handling", func(t *testing.T) {
 		t.Run("rejects methods other than POST", func(t *testing.T) {
