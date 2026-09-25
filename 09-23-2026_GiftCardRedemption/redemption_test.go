@@ -131,5 +131,17 @@ func TestRedemptionService(t *testing.T) {
 				t.Fatalf("balance = %d, want 0", result.balance)
 			}
 		})
+
+		t.Run("does not redeem the card when crediting fails", func(t *testing.T) {
+			app := newTestApp(activeCard())
+			app.store.CreditErr = ErrUnavailable
+			result := app.redeem("user-123", "WELCOME25")
+			if result.card.Redeemed {
+				t.Fatal("card was marked redeemed after a failed credit")
+			}
+			if result.card.RedeemedBy != "" {
+				t.Fatalf("redeemed by = %q, want empty", result.card.RedeemedBy)
+			}
+		})
 	})
 }
