@@ -46,38 +46,27 @@ func NewMemoryStore(cards ...GiftCard) *MemoryStore {
 	return store
 }
 
-func (s *MemoryStore) FindGiftCard(code string) (GiftCard, error) {
+func (s *MemoryStore) RedeemAndCredit(code, userID string) (int, int, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	card, ok := s.cards[code]
 	if !ok {
-		return GiftCard{}, ErrCardNotFound
-	}
-	return card, nil
-}
-
-func (s *MemoryStore) RedeemAndCredit(code, userID string, amountCents int) (int, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	if s.CreditErr != nil {
-		return 0, s.CreditErr
-	}
-
-	card, ok := s.cards[code]
-	if !ok {
-		return 0, ErrCardNotFound
+		return 0, 0, ErrCardNotFound
 	}
 	if card.Redeemed {
-		return 0, ErrCardRedeemed
+		return 0, 0, ErrCardRedeemed
+	}
+	if s.CreditErr != nil {
+		return 0, 0, s.CreditErr
 	}
 
 	card.Redeemed = true
 	card.RedeemedBy = userID
 	s.cards[code] = card
-	s.balances[userID] += amountCents
-	return s.balances[userID], nil
+	s.balances[userID] += card.ValueCents
+
+	return card.ValueCents, s.balances[userID], nil
 }
 
 func (s *MemoryStore) GiftCard(code string) GiftCard {
@@ -110,24 +99,15 @@ func (s *RedemptionService) Redeem(userID, cardCode string) (Receipt, error) {
 		return Receipt{}, ErrInvalidUser
 	}
 
-	card, err := s.store.FindGiftCard(cardCode)
+	amountCents, newBalance, err := s.store.RedeemAndCredit(cardCode, userID)
 	if err != nil {
-		return Receipt{}, fmt.Errorf("find gift card: %w", err)
+		return Receipt{}, fmt.Errorf("redeem gift card: %w", err)
 	}
-	if card.Redeemed {
-		return Receipt{}, ErrCardRedeemed
-	}
-
-	newBalance, err := s.store.RedeemAndCredit(card.Code, userID, card.ValueCents)
-	if err != nil {
-		return Receipt{}, fmt.Errorf("error redeeming card and crediting balance: %w", err)
-	}
-
 
 	return Receipt{
 		UserID:      userID,
-		CardCode:    card.Code,
-		AmountCents: card.ValueCents,
+		CardCode:    cardCode,
+		AmountCents: amountCents,
 		NewBalance:  newBalance,
 	}, nil
 }
