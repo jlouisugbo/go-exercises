@@ -51,6 +51,7 @@ Vary the **domain** each time independently of topic (e-commerce, gaming, logist
 ## What every exercise must be
 
 - Solvable in about 30–40 minutes.
+- Scoped to one primary function or method. That's where the flaw lives and where nearly all of the code worth reading sits. Supporting types are the minimum needed to make the scenario concrete — a plain data struct or two is normal; a layered store/service/repository stack with a handful of CRUD methods standing in as a fake database is not. Even a topic named after a layer ("HTTP handlers, services, and repositories", "Database boundaries and transaction thinking") is about the concept at that boundary, not a mandate to build every layer out in full — model the boundary with the smallest shape that makes the lesson real (often a single collaborator with one or two methods) and let the primary function carry the weight. If you catch yourself writing a constructor for a second type, or giving a "repository" or "store" more than a couple of methods, that's a sign to cut rather than add.
 - Real-world shaped: code that looks like something written under deadline pressure, not a textbook example.
 - One **primary** flaw tied to the session's topic, optionally 1–2 smaller independent flaws (magic strings/numbers, poor naming, etc.) for realism — never so many they compete for attention.
 - Silent about its own pattern. The README describes what the code does and why it's painful. It never names the smell, the GoF pattern, or the idiom being taught. That's for the reviewer (Claude, afterward) to name, and for you to discover.
@@ -61,7 +62,7 @@ Vary the **domain** each time independently of topic (e-commerce, gaming, logist
 Each exercise is a dated directory at the repo root: `{yyyy-mm-dd}_{ExerciseName}/` (PascalCase exercise name), containing:
 
 - **go.mod** — `module github.com/jlouisugbo/go-exercises/{yyyy-mm-dd}_{ExerciseName}` and a `go 1.27` directive (bump this yourself when a newer Go version becomes current — the generation session won't do that on its own). No external deps unless the exercise genuinely needs one. Write only code that's idiomatic and correct under 1.27 — nothing here should lean on a toolchain-specific or preview feature that wouldn't also work on the next couple of point releases.
-- **{lowercase_package}.go** — the flawed implementation. `package {lowercase_package}` at the top. Idiomatic Go otherwise (gofmt'd, sensible naming) except where the flaw itself requires the anti-pattern.
+- **{lowercase_package}.go** — the flawed implementation, centered on the one primary function or method described above. `package {lowercase_package}` at the top. Idiomatic Go otherwise (gofmt'd, sensible naming) except where the flaw itself requires the anti-pattern.
 - **{lowercase_package}_test.go** — see rules below.
 - **README.md** — see template below.
 
@@ -89,7 +90,7 @@ This is a standalone Go module with its own go.mod, independent of every other e
 ## Restrictions
 
 * Any modifications to a test should maintain the spirit of the original test.
-* [exercise-specific restrictions, if any]
+* [exercise-specific restrictions, if any — a good one pins exactly what must survive the refactor, e.g. "keep this function's exported name and the order of its checks intact," so the attempt has a bounded target instead of being a free rewrite]
 
 ## Running Tests
 
