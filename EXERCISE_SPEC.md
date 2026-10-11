@@ -60,7 +60,7 @@ Vary the **domain** each time independently of topic (e-commerce, gaming, logist
 
 Each exercise is a dated directory at the repo root: `{yyyy-mm-dd}_{ExerciseName}/` (PascalCase exercise name), containing:
 
-- **go.mod** — `module github.com/jlouisugbo/go-exercises/{yyyy-mm-dd}_{ExerciseName}` and a `go 1.23` (or current) directive. No external deps unless the exercise genuinely needs one.
+- **go.mod** — `module github.com/jlouisugbo/go-exercises/{yyyy-mm-dd}_{ExerciseName}` and a `go 1.27` directive (bump this yourself when a newer Go version becomes current — the generation session won't do that on its own). No external deps unless the exercise genuinely needs one. Write only code that's idiomatic and correct under 1.27 — nothing here should lean on a toolchain-specific or preview feature that wouldn't also work on the next couple of point releases.
 - **{lowercase_package}.go** — the flawed implementation. `package {lowercase_package}` at the top. Idiomatic Go otherwise (gofmt'd, sensible naming) except where the flaw itself requires the anti-pattern.
 - **{lowercase_package}_test.go** — see rules below.
 - **README.md** — see template below.
