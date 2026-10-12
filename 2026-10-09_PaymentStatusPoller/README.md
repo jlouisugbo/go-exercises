@@ -1,5 +1,11 @@
 # Payment Status Poller
 
+## AI
+
+There's no rule against asking Claude for help before you've tried this yourself, but consider it a friendly guideline. The point of this exercise is to build your own instincts — the growth comes from wrestling with the code yourself, not from reading someone else's refactor. Claude is genuinely useful here, it's just better used *after* your own attempt than instead of one.
+
+So give it a real try with your own hands and judgment first. When your tests pass (or you're stuck and want a second opinion), bring it back — see "When you're ready for a review" below.
+
 ## Setup
 
 This is a standalone Go module with its own go.mod, independent of every other exercise in this repo. `cd` into this directory before running anything.
@@ -7,7 +13,7 @@ This is a standalone Go module with its own go.mod, independent of every other e
 ## Restrictions
 
 * Any modifications to a test should maintain the spirit of the original test.
-* Keep `PaymentGateway` as the dependency boundary — don't swap in a concrete HTTP client type.
+* Keep `PaymentGateway` as the dependency boundary, and keep `WaitForTerminalStatus`'s exported name and its terminal-status/exhausted-attempts behavior intact — don't swap in a concrete HTTP client type.
 
 ## Running Tests
 
@@ -25,7 +31,7 @@ Product wants `/payments/{id}/confirm` to have a strict 2-second budget — if a
 
 ## Goals
 
-* Make the code easier to extend and trust long-term — the point isn't just to make today's flaw disappear, it's to leave the next change easy to make without reopening what you just refactored
+* Make the code easier to extend and trust long-term — the point isn't just to make today's flaw disappear, it's to leave the next change (a new case, a new type, a new rule) easy to make without reopening what you just refactored
 * `WaitForTerminalStatus` should stop promptly and return a clear error once its context is done, instead of running its schedule to completion regardless
 * Keep the terminal-status and exhausted-attempts behavior intact for callers who pass a context with no deadline
 
