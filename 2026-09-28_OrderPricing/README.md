@@ -1,5 +1,11 @@
 # Order Pricing
 
+## AI
+
+There's no rule against asking Claude for help before you've tried this yourself, but consider it a friendly guideline. The point of this exercise is to build your own instincts — the growth comes from wrestling with the code yourself, not from reading someone else's refactor. Claude is genuinely useful here, it's just better used *after* your own attempt than instead of one.
+
+So give it a real try with your own hands and judgment first. When your tests pass (or you're stuck and want a second opinion), bring it back — see "When you're ready for a review" below.
+
 ## Setup
 
 This is a standalone Go module with its own go.mod, independent of every other exercise in this repo. `cd` into this directory before running anything.
