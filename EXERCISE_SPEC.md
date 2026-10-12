@@ -8,6 +8,8 @@ This is a solo, async version of a "Refactor Party": normally a live group sessi
 
 The underlying goal is not "memorize backend architecture." It's **learn Go by wrestling with backend-shaped code**. You already know Go syntax; you're new to backend patterns. Early exercises should have fairly visible problems. Later ones should force real reasoning about ownership, dependencies, API boundaries, failure modes, concurrency, and maintainability.
 
+Note on GoF patterns specifically: topic 13 below ("when GoF/OOP patterns translate well to Go, and when Go has a simpler idiom") is where those get their deliberate, skeptical due. Don't smuggle a named Gang-of-Four pattern into every exercise as an implicit goal — most exercises are about a backend concept, not a pattern label, and forcing one in everywhere would drift this back toward "memorize patterns," which is explicitly not the point.
+
 ## Topic rotation
 
 Rotate through these, roughly in order, but adapt to progress.jsonl (see below) rather than following it rigidly:
@@ -53,7 +55,7 @@ Vary the **domain** each time independently of topic (e-commerce, gaming, logist
 - Solvable in about 30–40 minutes.
 - Scoped to one primary function or method. That's where the flaw lives and where nearly all of the code worth reading sits. Supporting types are the minimum needed to make the scenario concrete — a plain data struct or two is normal; a layered store/service/repository stack with a handful of CRUD methods standing in as a fake database is not. Even a topic named after a layer ("HTTP handlers, services, and repositories", "Database boundaries and transaction thinking") is about the concept at that boundary, not a mandate to build every layer out in full — model the boundary with the smallest shape that makes the lesson real (often a single collaborator with one or two methods) and let the primary function carry the weight. If you catch yourself writing a constructor for a second type, or giving a "repository" or "store" more than a couple of methods, that's a sign to cut rather than add.
 - Real-world shaped: code that looks like something written under deadline pressure, not a textbook example.
-- One **primary** flaw tied to the session's topic, optionally 1–2 smaller independent flaws (magic strings/numbers, poor naming, etc.) for realism — never so many they compete for attention.
+- One **primary** flaw tied to the session's topic, optionally 1–2 smaller independent flaws (magic strings/numbers, poor naming, etc.) for realism — never so many they compete for attention. The flaw should be obvious once you're looking for it, not cartoonish or telegraphed by over-the-top naming.
 - Silent about its own pattern. The README describes what the code does and why it's painful. It never names the smell, the GoF pattern, or the idiom being taught. That's for the reviewer (Claude, afterward) to name, and for you to discover.
 - Never shipped with a solution. The point is the attempt.
 
@@ -68,6 +70,7 @@ Each exercise is a dated directory at the repo root: `{yyyy-mm-dd}_{ExerciseName
 
 ### Test file rules
 
+- Before writing this file, skim the most recently added exercise's `_test.go` in this repo (if one exists) for in-repo conventions — naming, helper shape, comment style — so tests read consistently across exercises rather than each reinventing the format.
 - `package {lowercase_package}` at the top; standard library `testing` only, no third-party frameworks.
 - One assertion per subtest; nested `t.Run` — outer group by method/scenario, inner per assertion.
 - Cover every conditional branch (`if`/`else if`/`else`/`switch` case) with at least one subtest.
@@ -76,12 +79,19 @@ Each exercise is a dated directory at the repo root: `{yyyy-mm-dd}_{ExerciseName
   `// This helper is expected to change as you refactor — update it to match your new API.`
   (or the plural form for multiple helpers), followed by:
   `// End of helper — the tests below should not need to change as you refactor. But you are welcome to change them if you find you need to!`
+- Keep the seam as small as the return shape actually needs: when the function under test just returns a value and/or an error, the helper call itself is the seam — don't manufacture extra named helpers around it. Only pull out additional small helpers (e.g. one per field) when the return value is a compound type (a struct, map, or multiple values) that several tests destructure or index into repeatedly.
 - Every test in the file must go through these helpers — never construct the type or call the function under test directly inline elsewhere in the file.
 
 ### README template
 
 ```
 # {Exercise Name}
+
+## AI
+
+There's no rule against asking Claude for help before you've tried this yourself, but consider it a friendly guideline. The point of this exercise is to build your own instincts — the growth comes from wrestling with the code yourself, not from reading someone else's refactor. Claude is genuinely useful here, it's just better used *after* your own attempt than instead of one.
+
+So give it a real try with your own hands and judgment first. When your tests pass (or you're stuck and want a second opinion), bring it back — see "When you're ready for a review" below.
 
 ## Setup
 
@@ -106,7 +116,7 @@ This is a standalone Go module with its own go.mod, independent of every other e
 
 ## Goals
 
-* Make the code easier to extend and trust long-term — the point isn't just to make today's flaw disappear, it's to leave the next change easy to make without reopening what you just refactored
+* Make the code easier to extend and trust long-term — the point isn't just to make today's flaw disappear, it's to leave the next change (a new case, a new type, a new rule) easy to make without reopening what you just refactored
 * [exercise-specific goal]
 * [exercise-specific goal]
 
