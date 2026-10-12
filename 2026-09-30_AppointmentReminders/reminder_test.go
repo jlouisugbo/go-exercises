@@ -15,10 +15,6 @@ func sendReminder(s *ReminderService, appt Appointment) error {
 	return s.SendReminder(appt)
 }
 
-func sendBatch(s *ReminderService, appts []Appointment) []error {
-	return s.SendBatch(appts)
-}
-
 // End of helper — the tests below should not need to change as you refactor. But you are welcome to change them if you find you need to!
 
 func testAppointment(email string) Appointment {
@@ -60,26 +56,6 @@ func TestSendReminder(t *testing.T) {
 		err := sendReminder(svc, testAppointment("not-an-email"))
 		if err == nil {
 			t.Fatal("expected an error for an email address without an @")
-		}
-	})
-}
-
-func TestSendBatch(t *testing.T) {
-	t.Run("all appointments succeed", func(t *testing.T) {
-		svc := newTestService("smtp.clinicrelay.test", "reminders@riverside.test")
-		appts := []Appointment{testAppointment("a@example.com"), testAppointment("b@example.com")}
-		errs := sendBatch(svc, appts)
-		if len(errs) != 0 {
-			t.Fatalf("expected no errors, got %v", errs)
-		}
-	})
-
-	t.Run("one appointment fails while the other succeeds", func(t *testing.T) {
-		svc := newTestService("smtp.clinicrelay.test", "reminders@riverside.test")
-		appts := []Appointment{testAppointment("a@example.com"), testAppointment("not-an-email")}
-		errs := sendBatch(svc, appts)
-		if len(errs) != 1 {
-			t.Fatalf("expected exactly 1 error, got %d: %v", len(errs), errs)
 		}
 	})
 }

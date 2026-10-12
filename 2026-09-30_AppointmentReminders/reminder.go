@@ -74,15 +74,3 @@ func (s *ReminderService) SendReminder(appt Appointment) error {
 	}
 	return nil
 }
-
-// SendBatch sends reminders for every appointment in the list, collecting
-// (rather than stopping on) individual failures.
-func (s *ReminderService) SendBatch(appts []Appointment) []error {
-	var errs []error
-	for _, appt := range appts {
-		if err := s.SendReminder(appt); err != nil {
-			errs = append(errs, err)
-		}
-	}
-	return errs
-}

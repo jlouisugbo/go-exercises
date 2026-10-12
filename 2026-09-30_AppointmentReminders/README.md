@@ -1,5 +1,11 @@
 # Appointment Reminders
 
+## AI
+
+There's no rule against asking Claude for help before you've tried this yourself, but consider it a friendly guideline. The point of this exercise is to build your own instincts — the growth comes from wrestling with the code yourself, not from reading someone else's refactor. Claude is genuinely useful here, it's just better used *after* your own attempt than instead of one.
+
+So give it a real try with your own hands and judgment first. When your tests pass (or you're stuck and want a second opinion), bring it back — see "When you're ready for a review" below.
+
 ## Setup
 
 This is a standalone Go module with its own go.mod, independent of every other exercise in this repo. `cd` into this directory before running anything.
@@ -8,6 +14,7 @@ This is a standalone Go module with its own go.mod, independent of every other e
 
 * Any modifications to a test should maintain the spirit of the original test.
 * Standard library only — don't reach for a third-party mocking library to make this easier to test.
+* Keep `SendReminder`'s exported name and the order of its two validation checks (missing relay host, then invalid recipient email) intact.
 
 ## Running Tests
 
@@ -17,7 +24,7 @@ This is a standalone Go module with its own go.mod, independent of every other e
 
 Riverside Family Clinic's scheduling system sends a reminder email to every patient the day before their appointment. `ReminderService.SendReminder` formats the message and hands it to the clinic's SMTP relay, and it's worked fine since launch — reminders go out, patients show up more often, everyone's happy.
 
-The trouble started when a teammate tried to add a "preview" screen to the admin dashboard, so front-desk staff can see what a reminder will say before it goes out. Wiring that up meant reaching into `SendReminder`, because there's no way to get just the formatted message without also being ready to actually hand it to a live relay connection.
+The trouble started when a teammate tried to add a "preview" screen to the admin dashboard, so front-desk staff can see what a reminder will say before it goes out. Wiring that up meant reaching into `SendReminder`, because there's no way to get just the formatted message without also being ready to actually hand it to a live relay connection. The relay client gets built from scratch, inside the method, every time — there's no seam where a test, or a preview screen, could swap in anything else.
 
 Now product wants delivery analytics — which relay, how often it fails, that kind of thing — and every attempt to unit test that logic runs into the same wall: the thing actually worth testing is "did we build the right message and hand it off correctly," but there's no way to exercise that without a relay configuration sitting in the middle of every test.
 
@@ -27,7 +34,7 @@ A meaningful share of Riverside's older patients don't reliably check email, but
 
 ## Goals
 
-* Make the code easier to extend and trust long-term — the point isn't just to make today's flaw disappear, it's to leave the next change easy to make without reopening what you just refactored
+* Make the code easier to extend and trust long-term — the point isn't just to make today's flaw disappear, it's to leave the next change (a new case, a new type, a new rule) easy to make without reopening what you just refactored
 * Make it possible to add the SMS fallback without duplicating the message-building logic or teaching `ReminderService` the internals of a second delivery mechanism
 * Make it possible to test message construction and delivery-failure handling without any relay configuration involved at all
 
