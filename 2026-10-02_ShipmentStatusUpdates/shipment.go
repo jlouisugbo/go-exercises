@@ -18,7 +18,7 @@ type Shipment struct {
 	EscalatedAt *time.Time `json:"escalated_at,omitempty"`
 }
 
-// Server holds the in-memory shipment store and serves the status-update
+// Server holds the in-memory shipments and serves the status-update
 // endpoint.
 type Server struct {
 	shipments map[string]*Shipment
